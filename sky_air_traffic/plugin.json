@@ -14,7 +14,8 @@
     { "name": "layout", "type": "select", "label": "Layout", "default":"vertical", "choices": [
       {"value" : "vertical", "label": "Vertical"},
       {"value" : "horizontal", "label": "Horizontal"}
-    ]}
+    ]},
+    {"name": "show_labels", "type": "boolean", "label": "Show Numeric Labels", "default":false}
   ],
   "render": { "dither": "none", "needs_network": true },
   "requires": ["network:opensky-network.org"]

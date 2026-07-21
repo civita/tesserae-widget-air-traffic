@@ -34,7 +34,7 @@ function bearingDeg(lat1, lon1, lat2, lon2) {
 // the search radius; each flight is a small triangle pointing in
 // its heading direction, placed at its (bearing, distance) polar
 // coordinate.
-function radarSvg({ centerLat, centerLon, radius, flights }) {
+function radarSvg({ centerLat, centerLon, radius, flights, show_labels}) {
   const W = 240;
   const H = 240;
   const cx = W / 2;
@@ -88,11 +88,17 @@ function radarSvg({ centerLat, centerLon, radius, flights }) {
     const fill = i === 0 ? "var(--accent-1)" : onGround ? "var(--text-muted)" : "var(--accent-4)";
     // Bigger plane triangle + white halo so the dots pop off the
     // bolder rings.
-    return `
+    var plane_t = `
       <g transform="translate(${x.toFixed(1)}, ${y.toFixed(1)}) rotate(${heading.toFixed(0)})">
         <polygon points="0,-8 6,6 0,3 -6,6" fill="${fill}"
                  stroke="var(--surface)" stroke-width="1.2"/>
       </g>`;
+    if (show_labels) {
+      plane_t += `<text x="${(x+4).toFixed(1)}" y="${(y+14).toFixed(1)}"
+      font-size="12" font-weight="600"
+      fill="var(--text-primary)" font-family="var(--font-family)">${i}</text>`;
+    }
+    return plane_t;
   }).join("");
 
   return `
@@ -124,6 +130,7 @@ export default function render(shadow, ctx) {
   const radius = Number(data.radius) || 60;
   const centerLat = Number(data.lat) || 0;
   const centerLon = Number(data.lon) || 0;
+  const show_labels = Boolean(options.show_labels) || false;
 
   if (flights.length === 0) {
     shadow.innerHTML = `
@@ -135,7 +142,7 @@ export default function render(shadow, ctx) {
     return;
   }
 
-  const radar = radarSvg({ centerLat, centerLon, radius, flights });
+  const radar = radarSvg({ centerLat, centerLon, radius, flights, show_labels });
 
   // Altitude reference for the per-row bar. 12 km is a typical
   // upper-cruising ceiling, so a CRJ at 10k reads as a tall bar.
@@ -150,6 +157,7 @@ export default function render(shadow, ctx) {
     return `
       <div class="at-row ${i % 2 ? "is-zebra" : ""}">
         <div class="list-lead at-row-lead">
+          <span><small>${show_labels ? i : ""}</small></span>
           <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
           <span class="list-title">${escapeHtml(f.callsign || "-")}<small class="at-country">${escapeHtml(f.country || "")}</small></span>
         </div>
