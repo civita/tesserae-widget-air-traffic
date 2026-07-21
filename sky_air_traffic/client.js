@@ -96,7 +96,7 @@ function radarSvg({ centerLat, centerLon, radius, flights, show_labels}) {
     if (show_labels) {
       plane_t += `<text x="${(x+4).toFixed(1)}" y="${(y+14).toFixed(1)}"
       font-size="12" font-weight="600"
-      fill="var(--text-primary)" font-family="var(--font-family)">${i}</text>`;
+      fill="var(--text-primary)" font-family="var(--font-family)">${i + 1}</text>`;
     }
     return plane_t;
   }).join("");
@@ -157,7 +157,7 @@ export default function render(shadow, ctx) {
     return `
       <div class="at-row ${i % 2 ? "is-zebra" : ""}">
         <div class="list-lead at-row-lead">
-          <span><small>${show_labels ? i : ""}</small></span>
+          <span><small>${show_labels ? i + 1 : ""}</small></span>
           <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
           <span class="list-title">${escapeHtml(f.callsign || "-")}<small class="at-country">${escapeHtml(f.country || "")}</small></span>
         </div>
