@@ -34,7 +34,7 @@ function bearingDeg(lat1, lon1, lat2, lon2) {
 // the search radius; each flight is a small triangle pointing in
 // its heading direction, placed at its (bearing, distance) polar
 // coordinate.
-function radarSvg({ centerLat, centerLon, radius, flights }) {
+function radarSvg({ centerLat, centerLon, radius, flights, show_labels}) {
   const W = 240;
   const H = 240;
   const cx = W / 2;
@@ -88,11 +88,17 @@ function radarSvg({ centerLat, centerLon, radius, flights }) {
     const fill = i === 0 ? "var(--accent-1)" : onGround ? "var(--text-muted)" : "var(--accent-4)";
     // Bigger plane triangle + white halo so the dots pop off the
     // bolder rings.
-    return `
+    var plane_t = `
       <g transform="translate(${x.toFixed(1)}, ${y.toFixed(1)}) rotate(${heading.toFixed(0)})">
         <polygon points="0,-8 6,6 0,3 -6,6" fill="${fill}"
                  stroke="var(--surface)" stroke-width="1.2"/>
       </g>`;
+    if (show_labels) {
+      plane_t += `<text x="${(x+4).toFixed(1)}" y="${(y+14).toFixed(1)}"
+      font-size="12" font-weight="600"
+      fill="var(--text-primary)" font-family="var(--font-family)">${i}</text>`;
+    }
+    return plane_t;
   }).join("");
 
   return `
@@ -107,6 +113,7 @@ function radarSvg({ centerLat, centerLon, radius, flights }) {
 
 export default function render(shadow, ctx) {
   const data = ctx?.data ?? {};
+  const options = ctx?.cell?.options ?? {};
   const css = `<link rel="stylesheet" href="/static/style/spectra-widgets.css">`;
 
   if (data.error) {
@@ -123,6 +130,7 @@ export default function render(shadow, ctx) {
   const radius = Number(data.radius) || 60;
   const centerLat = Number(data.lat) || 0;
   const centerLon = Number(data.lon) || 0;
+  const show_labels = Boolean(options.show_labels) || false;
 
   if (flights.length === 0) {
     shadow.innerHTML = `
@@ -134,7 +142,7 @@ export default function render(shadow, ctx) {
     return;
   }
 
-  const radar = radarSvg({ centerLat, centerLon, radius, flights });
+  const radar = radarSvg({ centerLat, centerLon, radius, flights, show_labels });
 
   // Altitude reference for the per-row bar. 12 km is a typical
   // upper-cruising ceiling, so a CRJ at 10k reads as a tall bar.
@@ -149,6 +157,7 @@ export default function render(shadow, ctx) {
     return `
       <div class="at-row ${i % 2 ? "is-zebra" : ""}">
         <div class="list-lead at-row-lead">
+          <span><small>${show_labels ? i : ""}</small></span>
           <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
           <span class="list-title">${escapeHtml(f.callsign || "-")}<small class="at-country">${escapeHtml(f.country || "")}</small></span>
         </div>
@@ -166,14 +175,47 @@ export default function render(shadow, ctx) {
     ? `${data.shown ?? flights.length}/${data.count}`
     : `${flights.length}`;
 
+  const layoutClass = (options.layout === 'horizontal') ? 'at-body-horizontal' : 'at-body-vertical';
+
   const layout = `
-    .at-radar {
-      flex: 0 0 auto;
+    .at-body-horizontal {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .at-body-horizontal .at-radar {
+      flex: 0 0 40%;
+      width: 40%;
+      max-width: 40%;
+    }
+    .at-body-horizontal .at-radar svg {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+    .at-body-horizontal .list-body {
+      flex: 1 1 60%;
+      min-width: 0;
+    }
+
+    .at-body-vertical {
+      display: flex;
+      flex-direction: column;
+    }
+    .at-body-vertical .at-radar {
       width: 100%;
       max-height: 14em;
       display: flex;
       justify-content: center;
-      padding: var(--space-1) 0;
+    }
+    .at-body-vertical .at-radar svg {
+      width: auto;
+      max-width: 100%;
+      max-height: 14em;
+    }
+    .at-body-vertical .list-body {
+      flex: 0 0 auto;
     }
     .at-radar svg {
       width: auto;
@@ -253,9 +295,9 @@ export default function render(shadow, ctx) {
         <h3>Air Traffic</h3>
         <span class="w-title-meta">${escapeHtml(totalMeta)}</span>
       </div>
-      <div class="w-body" style="gap:var(--space-2)">
+      <div class="w-body ${layoutClass}">
         <div class="at-radar">${radar}</div>
-        <div class="list-body" style="display:flex;flex-direction:column;flex:0 0 auto">${rows}</div>
+        <div class="list-body">${rows}</div>
       </div>
     </div>`;
 }
