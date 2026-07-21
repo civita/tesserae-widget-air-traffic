@@ -107,6 +107,7 @@ function radarSvg({ centerLat, centerLon, radius, flights }) {
 
 export default function render(shadow, ctx) {
   const data = ctx?.data ?? {};
+  const options = ctx?.cell?.options ?? {};
   const css = `<link rel="stylesheet" href="/static/style/spectra-widgets.css">`;
 
   if (data.error) {
@@ -166,14 +167,47 @@ export default function render(shadow, ctx) {
     ? `${data.shown ?? flights.length}/${data.count}`
     : `${flights.length}`;
 
+  const layoutClass = (options.layout === 'horizontal') ? 'at-body-horizontal' : 'at-body-vertical';
+
   const layout = `
-    .at-radar {
-      flex: 0 0 auto;
+    .at-body-horizontal {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .at-body-horizontal .at-radar {
+      flex: 0 0 40%;
+      width: 40%;
+      max-width: 40%;
+    }
+    .at-body-horizontal .at-radar svg {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+    }
+    .at-body-horizontal .list-body {
+      flex: 1 1 60%;
+      min-width: 0;
+    }
+
+    .at-body-vertical {
+      display: flex;
+      flex-direction: column;
+    }
+    .at-body-vertical .at-radar {
       width: 100%;
       max-height: 14em;
       display: flex;
       justify-content: center;
-      padding: var(--space-1) 0;
+    }
+    .at-body-vertical .at-radar svg {
+      width: auto;
+      max-width: 100%;
+      max-height: 14em;
+    }
+    .at-body-vertical .list-body {
+      flex: 0 0 auto;
     }
     .at-radar svg {
       width: auto;
@@ -253,9 +287,9 @@ export default function render(shadow, ctx) {
         <h3>Air Traffic</h3>
         <span class="w-title-meta">${escapeHtml(totalMeta)}</span>
       </div>
-      <div class="w-body" style="gap:var(--space-2)">
+      <div class="w-body ${layoutClass}">
         <div class="at-radar">${radar}</div>
-        <div class="list-body" style="display:flex;flex-direction:column;flex:0 0 auto">${rows}</div>
+        <div class="list-body">${rows}</div>
       </div>
     </div>`;
 }

@@ -10,7 +10,12 @@
     { "name": "latitude",  "type": "number", "label": "Latitude",                 "default": "" },
     { "name": "longitude", "type": "number", "label": "Longitude",                "default": "" },
     { "name": "radius_km", "type": "number", "label": "Search radius (km)",       "default": 60 },
-    { "name": "max_results","type": "number","label": "Max flights to list",      "default": 8 }
+    { "name": "max_results","type": "number","label": "Max flights to list",      "default": 8 },
+    { "name": "layout", "type": "select", "label": "Layout", "default":"vertical", "choices": [
+      {"value" : "vertical", "label": "Vertical"},
+      {"value" : "horizontal", "label": "Horizontal"}
+    ]}
   ],
-  "render": { "dither": "none", "needs_network": true }
+  "render": { "dither": "none", "needs_network": true },
+  "requires": ["network:opensky-network.org"]
 }
