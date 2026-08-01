@@ -85,18 +85,20 @@ function radarSvg({ centerLat, centerLon, radius, flights, show_labels}) {
     const y = cy + Math.sin(θ) * r;
     const heading = Number.isFinite(f.track) ? f.track : 0;
     const onGround = !!f.on_ground;
-    const fill = i === 0 ? "var(--accent-1)" : onGround ? "var(--text-muted)" : "var(--accent-4)";
-    // Bigger plane triangle + white halo so the dots pop off the
-    // bolder rings.
+    // E-INK OPTIMIZATION:
+    // Solid black fill for airborne planes, hollow outline for taxiing/ground planes
+    const fill = onGround ? "var(--surface, #ffffff)" : "var(--text-primary, #000000)";
+    const stroke = "var(--text-primary, #000000)";
+
     var plane_t = `
       <g transform="translate(${x.toFixed(1)}, ${y.toFixed(1)}) rotate(${heading.toFixed(0)})">
         <polygon points="0,-8 6,6 0,3 -6,6" fill="${fill}"
-                 stroke="var(--surface)" stroke-width="1.2"/>
+                 stroke="${stroke}" stroke-width="1.6"/>
       </g>`;
     if (show_labels) {
       plane_t += `<text x="${(x+4).toFixed(1)}" y="${(y+14).toFixed(1)}"
-      font-size="12" font-weight="600"
-      fill="var(--text-primary)" font-family="var(--font-family)">${i + 1}</text>`;
+      font-size="12" font-weight="900"
+      fill="var(--text-primary, #000000)" font-family="var(--font-family)">${i + 1}</text>`;
     }
     return plane_t;
   }).join("");
@@ -145,9 +147,6 @@ export default function render(shadow, ctx) {
   const radar = radarSvg({ centerLat, centerLon, radius, flights, show_labels });
 
   const rows = flights.map((f, i) => {
-      // Since we filtered out grounded planes on the server, everything here is airborne.
-      const accent = i === 0 ? "var(--accent-1)" : "var(--accent-4)";
-      
       // Default to cruising state
       let ph = "ph-airplane-tilt";
       let rot = Number.isFinite(f.track) ? f.track - 45 : 0;
@@ -160,36 +159,37 @@ export default function render(shadow, ctx) {
       const altFt = Math.max(Number(f.altitude_ft) || 0, 0);
       const vRate = Number(f.vertical_rate); // OpenSky provides this in m/s (+ is up, - is down)
 
-      // Apply custom icons and remove rotation if below threshold
-      if (Number.isFinite(altFt) && altFt < ALT_THRESHOLD) {
+      if (f.on_ground) {
+        ph = "ph-airplane-taxiing";
+      } else if (Number.isFinite(altFt) && altFt < ALT_THRESHOLD) {
         if (vRate > 0) {
-          ph = "ph-airplane-takeoff"; // Departing
-          rot = 0; // Do not rotate
+          ph = "ph-airplane-takeoff";
+          rot = 0; 
         } else if (vRate < 0) {
-          ph = "ph-airplane-landing"; // Arriving
-          rot = 0; // Do not rotate
+          ph = "ph-airplane-landing";
+          rot = 0; 
         }
       }
 
       // We display Airline if we extracted it, otherwise fallback to country
-      const subtext = f.airline ? f.airline : (f.country || "");
+      const subtext = f.country || "";
 
       return `
-        <div class="at-row ${i % 2 ? "is-zebra" : ""}">
-          <div class="list-lead at-row-lead">
-            <span><small>${show_labels ? i + 1 : ""}</small></span>
-            <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
-            <span class="list-title">${escapeHtml(f.callsign || "-")}
-              <small class="at-country">${escapeHtml(subtext)}</small>
-            </span>
-          </div>
-          <div class="at-meta">
-            ${f.category_text ? `<span style="font-size:0.8em; color:var(--text-muted); font-weight:var(--fw-semi); margin-right: 6px;">${escapeHtml(f.category_text)}</span>` : ""}
-            <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(altFt))}</span>
-            ${f.distance_mi != null ? `<small class="at-dist">${escapeHtml(f.distance_mi + "mi")}</small>` : ""}
-          </div>
-        </div>`;
-    }).join("");
+            <div class="at-row ${i % 2 ? "is-zebra" : ""}">
+              <div class="list-lead at-row-lead">
+                <span><small>${show_labels ? i + 1 : ""}</small></span>
+                <i class="ph-bold ${ph}" style="color:var(--text-primary, #000);transform:rotate(${rot}deg)"></i>
+                <span class="list-title">${escapeHtml(f.callsign || "-")}
+                  <small class="at-country" style="color:var(--text-muted, #555)">${escapeHtml(subtext)}</small>
+                </span>
+              </div>
+              <div class="at-meta">
+                ${f.category_text ? `<span style="font-size:0.8em; color:var(--text-muted, #555); font-weight:var(--fw-semi); margin-right: 6px;">${escapeHtml(f.category_text)}</span>` : ""}
+                <span class="at-alt-text" style="color:var(--text-primary, #000); font-weight: bold;">${escapeHtml(fmtAlt(altFt))}</span>
+                ${f.distance_mi != null ? `<small class="at-dist" style="color:var(--text-muted, #444)">${escapeHtml(f.distance_mi + "mi")}</small>` : ""}
+              </div>
+            </div>`;
+        }).join("");
 
   const totalMeta = data.count != null
     ? `${data.shown ?? flights.length}/${data.count}`

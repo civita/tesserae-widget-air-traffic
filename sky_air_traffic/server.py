@@ -101,7 +101,11 @@ def fetch(
         except (IndexError, TypeError):
             continue
 
-        if len(s) > S_ON_GROUND and s[S_ON_GROUND]:
+        is_grounded = bool(s[S_ON_GROUND]) if len(s) > S_ON_GROUND else False
+        velocity = s[S_VELOCITY] if len(s) > S_VELOCITY else None
+
+        # Skip if it is on the ground AND not moving (velocity is 0 or None)
+        if is_grounded and (velocity is None or velocity == 0):
             continue
         if f_lat is None or f_lon is None:
             continue
@@ -118,10 +122,10 @@ def fetch(
                 "category_text": category_text,
                 "country": (s[S_COUNTRY] or "").strip() if len(s) > S_COUNTRY else "",
                 "altitude_ft": s[S_GEO_ALT] * 3.28084 if len(s) > S_GEO_ALT and s[S_GEO_ALT] is not None else None,
-                "velocity_mph": s[S_VELOCITY] * 2.23694 if len(s) > S_VELOCITY and s[S_VELOCITY] is not None else None,
+                "velocity_mph": velocity * 2.23694 if len(s) > S_VELOCITY and velocity is not None else None,
                 "track": s[S_TRACK] if len(s) > S_TRACK else None,
                 "vertical_rate": s[S_VERTICAL] if len(s) > S_VERTICAL else None,
-                "on_ground": bool(s[S_ON_GROUND]) if len(s) > S_ON_GROUND else False,
+                "on_ground": is_grounded,
                 "lat": f_lat,
                 "lon": f_lon,
                 "distance_mi": round(d_mi, 1),
