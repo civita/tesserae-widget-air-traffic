@@ -144,9 +144,6 @@ export default function render(shadow, ctx) {
 
   const radar = radarSvg({ centerLat, centerLon, radius, flights, show_labels });
 
-  // Change ceiling reference to 40,000 feet for commercial cruising altitude
-  const ALT_CEIL = 40000;
-
   const rows = flights.map((f, i) => {
       // Since we filtered out grounded planes on the server, everything here is airborne.
       const accent = i === 0 ? "var(--accent-1)" : "var(--accent-4)";
@@ -155,10 +152,12 @@ export default function render(shadow, ctx) {
       let ph = "ph-airplane-tilt";
       let rot = Number.isFinite(f.track) ? f.track - 45 : 0;
 
-      
+
       // Define our low-altitude threshold (10,000 feet)
-      const ALT_THRESHOLD = 2000;
-      const altFt = Number(f.altitude_ft);
+      const ALT_THRESHOLD = 4000;
+      
+      // Clamp the altitude so it never drops below 0
+      const altFt = Math.max(Number(f.altitude_ft) || 0, 0);
       const vRate = Number(f.vertical_rate); // OpenSky provides this in m/s (+ is up, - is down)
 
       // Apply custom icons and remove rotation if below threshold
@@ -172,9 +171,6 @@ export default function render(shadow, ctx) {
         }
       }
 
-      // Use altitude_ft instead of altitude
-      const altPct = Math.max(2, Math.min(100, ((Number(f.altitude_ft) || 0) / ALT_CEIL) * 100));
-      
       // We display Airline if we extracted it, otherwise fallback to country
       const subtext = f.airline ? f.airline : (f.country || "");
 
@@ -188,9 +184,7 @@ export default function render(shadow, ctx) {
             </span>
           </div>
           <div class="at-meta">
-            <span class="at-alt-bar" title="${escapeHtml(fmtAlt(f.altitude_ft))}">
-              <span class="at-alt-fill" style="height:${altPct.toFixed(0)}%;background:${accent}"></span>
-            </span>
+            ${f.category_text ? `<span style="font-size:0.8em; color:var(--text-muted); font-weight:var(--fw-semi); margin-right: 6px;">${escapeHtml(f.category_text)}</span>` : ""}
             <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(f.altitude_ft))}</span>
             ${f.distance_mi != null ? `<small class="at-dist">${escapeHtml(f.distance_mi + "mi")}</small>` : ""}
           </div>

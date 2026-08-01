@@ -28,7 +28,14 @@ S_VELOCITY = 9
 S_TRACK = 10
 S_VERTICAL = 11
 S_GEO_ALT = 13
+S_CATEGORY = 17
 
+CAT_MAP = {
+    1: "No Info", 2: "Light", 3: "Small", 4: "Large", 5: "High Vortex",
+    6: "Heavy", 7: "High Perf", 8: "Rotorcraft", 9: "Glider",
+    10: "Lighter-Air", 11: "Skydiver", 12: "Ultralight", 14: "UAV",
+    15: "Space", 16: "Emergency", 17: "Service"
+}
 
 def _bbox(lat: float, lon: float, mi: float) -> tuple[float, float, float, float]:
     dlat = mi / 69.0 # 69 miles per degree of latitude
@@ -101,9 +108,14 @@ def fetch(
         d_mi = _haversine_mi(lat, lon, f_lat, f_lon)
         if d_mi > radius:
             continue
+        # Extract the category ID and map it
+        cat_id = s[S_CATEGORY] if len(s) > S_CATEGORY and s[S_CATEGORY] is not None else 0
+        category_text = CAT_MAP.get(cat_id, "") if cat_id != 0 else ""
+
         flights.append(
             {
                 "callsign": (s[S_CALLSIGN] or "").strip() if len(s) > S_CALLSIGN else "",
+                "category_text": category_text,
                 "country": (s[S_COUNTRY] or "").strip() if len(s) > S_COUNTRY else "",
                 "altitude_ft": s[S_GEO_ALT] * 3.28084 if len(s) > S_GEO_ALT and s[S_GEO_ALT] is not None else None,
                 "velocity_mph": s[S_VELOCITY] * 2.23694 if len(s) > S_VELOCITY and s[S_VELOCITY] is not None else None,
