@@ -153,7 +153,8 @@ export default function render(shadow, ctx) {
       
       // Default to cruising state
       let ph = "ph-airplane-tilt";
-      const rot = Number.isFinite(f.track) ? f.track - 45 : 0;
+      let rot = Number.isFinite(f.track) ? f.track - 45 : 0;
+
       
       // Define our low-altitude threshold (10,000 feet)
       const ALT_THRESHOLD = 2000;
