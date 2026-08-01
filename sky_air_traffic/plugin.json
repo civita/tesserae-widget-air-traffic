@@ -1,9 +1,11 @@
 {
-  "id": "sky_air_traffic",
-  "name": "Air Traffic",
-  "description": "Flights currently overhead at your location via OpenSky Network (free, no key). Shows count + the nearest N flights with callsign / origin country / altitude / speed.",
-  "version": "0.2.0",
   "tesserae_compat": "1.x",
+  "name": "Sky, Air Traffic",
+  "version": "0.2.3",
+  "kind": "widget",
+  "description": "Flights currently overhead at your location via OpenSky Network (free, no key). Shows count + the nearest N flights with callsign / origin country / altitude / speed.",
+  "icon": "ph-airplane-tilt",
+  "supports": { "sizes": ["sm", "md", "lg"] },
   "options": [
     {
       "id": "latitude",
