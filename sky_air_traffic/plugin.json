@@ -1,22 +1,51 @@
 {
-  "tesserae_compat": "1.x",
-  "name": "Sky, Air Traffic",
-  "version": "0.2.0",
-  "kind": "widget",
+  "id": "sky_air_traffic",
+  "name": "Air Traffic",
   "description": "Flights currently overhead at your location via OpenSky Network (free, no key). Shows count + the nearest N flights with callsign / origin country / altitude / speed.",
-  "icon": "ph-airplane-tilt",
-  "supports": { "sizes": ["sm", "md", "lg"] },
-  "cell_options": [
-    { "name": "latitude",  "type": "number", "label": "Latitude",                 "default": "" },
-    { "name": "longitude", "type": "number", "label": "Longitude",                "default": "" },
-    { "name": "radius_km", "type": "number", "label": "Search radius (km)",       "default": 60 },
-    { "name": "max_results","type": "number","label": "Max flights to list",      "default": 8 },
-    { "name": "layout", "type": "select", "label": "Layout", "default":"vertical", "choices": [
-      {"value" : "vertical", "label": "Vertical"},
-      {"value" : "horizontal", "label": "Horizontal"}
-    ]},
-    {"name": "show_labels", "type": "boolean", "label": "Show Numeric Labels", "default":false}
-  ],
-  "render": { "dither": "none", "needs_network": true },
-  "requires": ["network:opensky-network.org"]
+  "version": "0.2.0",
+  "options": [
+    {
+      "id": "latitude",
+      "name": "Latitude",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "longitude",
+      "name": "Longitude",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "radius_mi",
+      "name": "Search Radius (Miles)",
+      "type": "number",
+      "default": 10,
+      "description": "Radius in miles to search for aircraft."
+    },
+    {
+      "id": "max_results",
+      "name": "Max Results",
+      "type": "number",
+      "default": 8,
+      "description": "Maximum number of flights to display in the list."
+    },
+    {
+      "id": "show_labels",
+      "name": "Show Map Labels",
+      "type": "boolean",
+      "default": false,
+      "description": "Display numeric labels next to planes on the radar."
+    },
+    {
+      "id": "layout",
+      "name": "Layout",
+      "type": "select",
+      "default": "vertical",
+      "choices": [
+        { "value": "vertical", "label": "Vertical" },
+        { "value": "horizontal", "label": "Horizontal" }
+      ]
+    }
+  ]
 }

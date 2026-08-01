@@ -11,11 +11,11 @@ function escapeHtml(s) {
   }[c]));
 }
 
-function fmtAlt(m) {
-  if (m == null) return "-";
-  const v = Number(m);
+function fmtAlt(ft) {
+  if (ft == null) return "-";
+  const v = Number(ft);
   if (!Number.isFinite(v)) return "-";
-  return `${(v / 1000).toFixed(1)}km`;
+  return `${Math.round(v).toLocaleString('en-US')} ft`;
 }
 
 // Initial bearing (forward azimuth) from point 1 to point 2, in
@@ -144,33 +144,40 @@ export default function render(shadow, ctx) {
 
   const radar = radarSvg({ centerLat, centerLon, radius, flights, show_labels });
 
-  // Altitude reference for the per-row bar. 12 km is a typical
-  // upper-cruising ceiling, so a CRJ at 10k reads as a tall bar.
-  const ALT_CEIL = 12000;
+  // Change ceiling reference to 40,000 feet for commercial cruising altitude
+  const ALT_CEIL = 40000;
 
   const rows = flights.map((f, i) => {
-    const inAir = !f.on_ground;
-    const accent = i === 0 ? "var(--accent-1)" : inAir ? "var(--accent-4)" : "var(--text-muted)";
-    const ph = inAir ? "ph-airplane-tilt" : "ph-airplane-landing";
-    const rot = Number.isFinite(f.track) ? f.track - 45 : 0;
-    const altPct = Math.max(2, Math.min(100, ((Number(f.altitude) || 0) / ALT_CEIL) * 100));
-    return `
-      <div class="at-row ${i % 2 ? "is-zebra" : ""}">
-        <div class="list-lead at-row-lead">
-          <span><small>${show_labels ? i + 1 : ""}</small></span>
-          <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
-          <span class="list-title">${escapeHtml(f.callsign || "-")}<small class="at-country">${escapeHtml(f.country || "")}</small></span>
-        </div>
-        <div class="at-meta">
-          <span class="at-alt-bar" title="${escapeHtml(fmtAlt(f.altitude))}">
-            <span class="at-alt-fill" style="height:${altPct.toFixed(0)}%;background:${accent}"></span>
-          </span>
-          <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(f.altitude))}</span>
-          ${f.distance_km != null ? `<small class="at-dist">${escapeHtml(f.distance_km + "km")}</small>` : ""}
-        </div>
-      </div>`;
-  }).join("");
+      const inAir = !f.on_ground;
+      const accent = i === 0 ? "var(--accent-1)" : inAir ? "var(--accent-4)" : "var(--text-muted)";
+      const ph = inAir ? "ph-airplane-tilt" : "ph-airplane-landing";
+      const rot = Number.isFinite(f.track) ? f.track - 45 : 0;
+      
+      // Use altitude_ft instead of altitude
+      const altPct = Math.max(2, Math.min(100, ((Number(f.altitude_ft) || 0) / ALT_CEIL) * 100));
+      
+      // We display Airline if we extracted it, otherwise fallback to country
+      const subtext = f.airline ? f.airline : (f.country || "");
 
+      return `
+        <div class="at-row ${i % 2 ? "is-zebra" : ""}">
+          <div class="list-lead at-row-lead">
+            <span><small>${show_labels ? i + 1 : ""}</small></span>
+            <i class="ph-bold ${ph}" style="color:${accent};transform:rotate(${rot}deg)"></i>
+            <span class="list-title">${escapeHtml(f.callsign || "-")}
+              <small class="at-country">${escapeHtml(subtext)}</small>
+            </span>
+          </div>
+          <div class="at-meta">
+            <span class="at-alt-bar" title="${escapeHtml(fmtAlt(f.altitude_ft))}">
+              <span class="at-alt-fill" style="height:${altPct.toFixed(0)}%;background:${accent}"></span>
+            </span>
+            <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(f.altitude_ft))}</span>
+            ${f.distance_mi != null ? `<small class="at-dist">${escapeHtml(f.distance_mi + "mi")}</small>` : ""}
+          </div>
+        </div>`;
+    }).join("");
+    
   const totalMeta = data.count != null
     ? `${data.shown ?? flights.length}/${data.count}`
     : `${flights.length}`;

@@ -30,11 +30,19 @@ S_VERTICAL = 11
 S_GEO_ALT = 13
 
 
-def _bbox(lat: float, lon: float, km: float) -> tuple[float, float, float, float]:
-    dlat = km / 111.0
-    dlon = km / (111.0 * max(0.1, math.cos(math.radians(lat))))
+def _bbox(lat: float, lon: float, mi: float) -> tuple[float, float, float, float]:
+    dlat = mi / 69.0 # 69 miles per degree of latitude
+    dlon = mi / (69.0 * max(0.1, math.cos(math.radians(lat))))
     return lat - dlat, lon - dlon, lat + dlat, lon + dlon
 
+def _haversine_mi(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 3958.8 # Radius of Earth in miles
+    p1 = math.radians(lat1)
+    p2 = math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(a))
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0
@@ -52,7 +60,8 @@ def fetch(
     del settings
     lat = float(options.get("latitude") or 0.0)
     lon = float(options.get("longitude") or 0.0)
-    radius = max(5.0, float(options.get("radius_km") or 60))
+
+    radius = max(5.0, float(options.get("radius_mi") or 40))
     max_results = max(1, int(options.get("max_results") or 8))
 
     data_dir = Path(ctx["data_dir"])
@@ -84,26 +93,29 @@ def fetch(
             f_lon = s[S_LON]
         except (IndexError, TypeError):
             continue
+
+        if len(s) > S_ON_GROUND and s[S_ON_GROUND]:
+            continue
         if f_lat is None or f_lon is None:
             continue
-        d = _haversine_km(lat, lon, f_lat, f_lon)
-        if d > radius:
+        d_mi = _haversine_mi(lat, lon, f_lat, f_lon)
+        if d_mi > radius:
             continue
         flights.append(
             {
                 "callsign": (s[S_CALLSIGN] or "").strip() if len(s) > S_CALLSIGN else "",
                 "country": (s[S_COUNTRY] or "").strip() if len(s) > S_COUNTRY else "",
-                "altitude": s[S_BARO_ALT] if len(s) > S_BARO_ALT else None,
-                "velocity": s[S_VELOCITY] if len(s) > S_VELOCITY else None,
+                "altitude_ft": s[S_BARO_ALT] * 3.28084 if len(s) > S_BARO_ALT and s[S_BARO_ALT] is not None else None,
+                "velocity_mph": s[S_VELOCITY] * 2.23694 if len(s) > S_VELOCITY and s[S_VELOCITY] is not None else None,
                 "track": s[S_TRACK] if len(s) > S_TRACK else None,
                 "vertical_rate": s[S_VERTICAL] if len(s) > S_VERTICAL else None,
                 "on_ground": bool(s[S_ON_GROUND]) if len(s) > S_ON_GROUND else False,
                 "lat": f_lat,
                 "lon": f_lon,
-                "distance_km": round(d, 1),
+                "distance_mi": round(d_mi, 1),
             }
         )
-    flights.sort(key=lambda f: f["distance_km"])
+    flights.sort(key=lambda f: f["distance_mi"])
     flights = flights[:max_results]
 
     result = {
