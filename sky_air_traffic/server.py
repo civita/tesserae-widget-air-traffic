@@ -83,7 +83,7 @@ def fetch(
     la_min, lo_min, la_max, lo_max = _bbox(lat, lon, radius)
     url = (
         "https://opensky-network.org/api/states/all"
-        f"?lamin={la_min:.4f}&lomin={lo_min:.4f}&lamax={la_max:.4f}&lomax={lo_max:.4f}"
+        f"?lamin={la_min:.4f}&lomin={lo_min:.4f}&lamax={la_max:.4f}&lomax={lo_max:.4f}&extended=1"
     )
     try:
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
