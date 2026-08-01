@@ -1,7 +1,7 @@
 {
   "tesserae_compat": "1.x",
   "name": "Sky, Air Traffic",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "kind": "widget",
   "description": "Flights currently overhead at your location via OpenSky Network (free, no key). Shows count + the nearest N flights with callsign / origin country / altitude / speed.",
   "icon": "ph-airplane-tilt",
@@ -11,6 +11,8 @@
       { "name": "longitude", "type": "number", "label": "Longitude",                "default": "" },
       { "name": "radius_mi", "type": "number", "label": "Search radius (mi)",       "default": 40 },
       { "name": "max_results","type": "number","label": "Max flights to list",      "default": 8 },
+      { "name": "client_id", "type": "string", "label": "OpenSky Client ID (Optional)", "default": "" },
+      { "name": "client_secret", "type": "string", "label": "OpenSky Secret (Optional)", "default": "" },
       { "name": "layout", "type": "select", "label": "Layout", "default":"vertical", "choices": [
         {"value" : "vertical", "label": "Vertical"},
         {"value" : "horizontal", "label": "Horizontal"}

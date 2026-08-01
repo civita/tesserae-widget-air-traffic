@@ -71,6 +71,10 @@ def fetch(
     radius = max(5.0, float(options.get("radius_mi") or 40))
     max_results = max(1, int(options.get("max_results") or 8))
 
+    # Grab credentials from the widget UI
+    client_id = (options.get("client_id") or "").strip()
+    client_secret = (options.get("client_secret") or "").strip()
+
     data_dir = Path(ctx["data_dir"])
     data_dir.mkdir(parents=True, exist_ok=True)
     cache = data_dir / f"at_{lat:.3f}_{lon:.3f}_{int(radius)}.json"
@@ -87,8 +91,36 @@ def fetch(
     )
     try:
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+
+
+        # Authentication Logic
+        if client_id and client_secret:
+            auth_url = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+            auth_data = urllib.parse.urlencode({
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret
+            }).encode("utf-8")
+            
+            try:
+                # Request the token
+                auth_req = urllib.request.Request(auth_url, data=auth_data)
+                with urllib.request.urlopen(auth_req, timeout=HTTP_TIMEOUT_S) as auth_resp:
+                    auth_payload = json.loads(auth_resp.read().decode("utf-8"))
+                    access_token = auth_payload.get("access_token")
+                    
+                    # If successful, inject the Bearer token into the main request
+                    if access_token:
+                        req.add_header("Authorization", f"Bearer {access_token}")
+                        
+            except Exception:
+                # If the token fetch fails (e.g., bad credentials), it silently falls back 
+                # to the unauthenticated request block below.
+                pass
+
         with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_S) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
+
     except Exception as err:
         return {"error": f"{type(err).__name__}: {err}", "flights": []}
 
