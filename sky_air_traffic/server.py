@@ -105,7 +105,7 @@ def fetch(
             {
                 "callsign": (s[S_CALLSIGN] or "").strip() if len(s) > S_CALLSIGN else "",
                 "country": (s[S_COUNTRY] or "").strip() if len(s) > S_COUNTRY else "",
-                "altitude_ft": s[S_BARO_ALT] * 3.28084 if len(s) > S_BARO_ALT and s[S_BARO_ALT] is not None else None,
+                "altitude_ft": s[S_GEO_ALT] * 3.28084 if len(s) > S_GEO_ALT and s[S_GEO_ALT] is not None else None,
                 "velocity_mph": s[S_VELOCITY] * 2.23694 if len(s) > S_VELOCITY and s[S_VELOCITY] is not None else None,
                 "track": s[S_TRACK] if len(s) > S_TRACK else None,
                 "vertical_rate": s[S_VERTICAL] if len(s) > S_VERTICAL else None,
