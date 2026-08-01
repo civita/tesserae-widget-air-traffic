@@ -155,7 +155,7 @@ export default function render(shadow, ctx) {
 
       // Define our low-altitude threshold (10,000 feet)
       const ALT_THRESHOLD = 4000;
-      
+
       // Clamp the altitude so it never drops below 0
       const altFt = Math.max(Number(f.altitude_ft) || 0, 0);
       const vRate = Number(f.vertical_rate); // OpenSky provides this in m/s (+ is up, - is down)
@@ -185,7 +185,7 @@ export default function render(shadow, ctx) {
           </div>
           <div class="at-meta">
             ${f.category_text ? `<span style="font-size:0.8em; color:var(--text-muted); font-weight:var(--fw-semi); margin-right: 6px;">${escapeHtml(f.category_text)}</span>` : ""}
-            <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(f.altitude_ft))}</span>
+            <span class="at-alt-text" style="color:${accent}">${escapeHtml(fmtAlt(altFt))}</span>
             ${f.distance_mi != null ? `<small class="at-dist">${escapeHtml(f.distance_mi + "mi")}</small>` : ""}
           </div>
         </div>`;
