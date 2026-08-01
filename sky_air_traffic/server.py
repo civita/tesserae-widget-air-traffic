@@ -105,7 +105,7 @@ def fetch(
         velocity = s[S_VELOCITY] if len(s) > S_VELOCITY else None
 
         # Skip if it is on the ground AND not moving (velocity is 0 or None)
-        if is_grounded and (velocity is None or velocity < 20):
+        if is_grounded and (velocity is None or velocity < 5):
             continue
         if f_lat is None or f_lon is None:
             continue
