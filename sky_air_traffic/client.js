@@ -148,11 +148,29 @@ export default function render(shadow, ctx) {
   const ALT_CEIL = 40000;
 
   const rows = flights.map((f, i) => {
-      const inAir = !f.on_ground;
-      const accent = i === 0 ? "var(--accent-1)" : inAir ? "var(--accent-4)" : "var(--text-muted)";
-      const ph = inAir ? "ph-airplane-tilt" : "ph-airplane-landing";
+      // Since we filtered out grounded planes on the server, everything here is airborne.
+      const accent = i === 0 ? "var(--accent-1)" : "var(--accent-4)";
+      
+      // Default to cruising state
+      let ph = "ph-airplane-tilt";
       const rot = Number.isFinite(f.track) ? f.track - 45 : 0;
       
+      // Define our low-altitude threshold (10,000 feet)
+      const ALT_THRESHOLD = 2000;
+      const altFt = Number(f.altitude_ft);
+      const vRate = Number(f.vertical_rate); // OpenSky provides this in m/s (+ is up, - is down)
+
+      // Apply custom icons and remove rotation if below threshold
+      if (Number.isFinite(altFt) && altFt < ALT_THRESHOLD) {
+        if (vRate > 0) {
+          ph = "ph-airplane-takeoff"; // Departing
+          rot = 0; // Do not rotate
+        } else if (vRate < 0) {
+          ph = "ph-airplane-landing"; // Arriving
+          rot = 0; // Do not rotate
+        }
+      }
+
       // Use altitude_ft instead of altitude
       const altPct = Math.max(2, Math.min(100, ((Number(f.altitude_ft) || 0) / ALT_CEIL) * 100));
       
