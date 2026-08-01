@@ -73,7 +73,7 @@ function radarSvg({ centerLat, centerLon, radius, flights, show_labels}) {
     <circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="var(--accent-1)" stroke-width="2" opacity="0.65"/>`;
   // Per-flight triangle, rotated by heading.
   const planes = flights.map((f, i) => {
-    const dist = Number(f.distance_km) || 0;
+    const dist = Number(f.distance_mi ?? f.distance_km) || 0;
     if (dist <= 0 || dist > radius) return "";
     const bearing = (Number.isFinite(f.lat) && Number.isFinite(f.lon))
       ? bearingDeg(centerLat, centerLon, f.lat, f.lon)
@@ -177,7 +177,7 @@ export default function render(shadow, ctx) {
           </div>
         </div>`;
     }).join("");
-    
+
   const totalMeta = data.count != null
     ? `${data.shown ?? flights.length}/${data.count}`
     : `${flights.length}`;
