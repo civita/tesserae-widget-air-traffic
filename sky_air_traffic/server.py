@@ -103,8 +103,16 @@ def fetch(
             }).encode("utf-8")
             
             try:
-                # Request the token
-                auth_req = urllib.request.Request(auth_url, data=auth_data)
+                # Explicitly add the Content-Type header from your curl command
+                # Also pass the widget's User-Agent to avoid getting blocked
+                auth_req = urllib.request.Request(
+                    auth_url, 
+                    data=auth_data, 
+                    headers={
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "User-Agent": USER_AGENT
+                    }
+                )
                 with urllib.request.urlopen(auth_req, timeout=HTTP_TIMEOUT_S) as auth_resp:
                     auth_payload = json.loads(auth_resp.read().decode("utf-8"))
                     access_token = auth_payload.get("access_token")
@@ -112,17 +120,37 @@ def fetch(
                     # If successful, inject the Bearer token into the main request
                     if access_token:
                         req.add_header("Authorization", f"Bearer {access_token}")
-                        
-            except Exception:
-                # If the token fetch fails (e.g., bad credentials), it silently falls back 
-                # to the unauthenticated request block below.
-                pass
+                    else:
+                        # Catch cases where the request succeeds but returns no token
+                        return {"error": "Auth succeeded but no token returned.", "flights": []}
+
+            except urllib.error.HTTPError as auth_err:
+                # This will capture specific HTTP errors (like 401 Unauthorized or 400 Bad Request)
+                error_body = auth_err.read().decode("utf-8")
+                return {"error": f"Auth HTTPError {auth_err.code}: {error_body}", "flights": []}
+            except Exception as auth_err:
+                # This will catch connectivity or parsing errors, stopping the silent fallback
+                return {"error": f"Auth failed: {type(auth_err).__name__}: {auth_err}", "flights": []}
+
 
         with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_S) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
 
+
+    except urllib.error.HTTPError as err:
+        # Check specifically for the 429 Rate Limit error
+        if err.code == 429:
+            retry_after = err.headers.get("X-Rate-Limit-Retry-After-Seconds")
+            if retry_after:
+                return {"error": f"Rate limit exceeded (429). Wait {retry_after} seconds.", "flights": []}
+            return {"error": "Rate limit exceeded (429).", "flights": []}
+            
+        # Handle other HTTP errors (like 500, 404, etc.)
+        return {"error": f"API HTTPError {err.code}: {err.reason}", "flights": []}
+        
     except Exception as err:
-        return {"error": f"{type(err).__name__}: {err}", "flights": []}
+        # Catch network timeouts or JSON parsing errors
+        return {"error": f"API Error: {type(err).__name__}: {err}", "flights": []}
 
     states = payload.get("states") or []
     flights = []
